@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Trouvez les pharmacies de garde au Sénégal — Dakar, Thiès, Saint-Louis, Ziguinchor, Kaolack et plus encore." />
+  <meta name="theme-color" content="#2E7D32" />
+  <title>Pharmyx Sénégal — Pharmacies de Garde</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+
+  <!-- ══ HEADER ══════════════════════════════════════════════════ -->
+  <header class="header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="brand" aria-label="Accueil Pharmyx">
+        <div class="brand-icon"><i class="fas fa-clinic-medical"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">Pharmyx</span>
+          <span class="brand-country">Sénégal</span>
+        </div>
+      </a>
+      <div class="header-right">
+        <div class="status-badge">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>En ligne</span>
+        </div>
+        <a href="admin.html" class="admin-link" title="Administration">
+          <i class="fas fa-cog" aria-hidden="true"></i>
+          <span>Admin</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ APP LAYOUT ═══════════════════════════════════════════════ -->
+  <div class="app-layout" role="main">
+
+    <!-- ── SIDEBAR ──────────────────────────────────────────────── -->
+    <aside class="sidebar" id="sidebar"
+      role="complementary"
+      aria-label="Recherche et liste des pharmacies de garde">
+
+      <!-- HERO — Accueil & horloge -->
+      <div class="sidebar-hero">
+        <div class="hero-top">
+          <div class="hero-left">
+            <span class="teranga-badge"><i class="fas fa-heart"></i> Teranga · Santé</span>
+            <p class="hero-greeting" id="heroGreeting">Bonjour</p>
+            <h2 class="hero-tagline">Votre pharmacie<br>de garde,<br>partout au Sénégal</h2>
+          </div>
+          <div class="hero-clock-box">
+            <div class="hero-time" id="heroClock">--:--</div>
+            <div class="hero-date" id="heroDate">---</div>
+          </div>
+        </div>
+
+        <!-- Statut de garde temps réel -->
+        <div class="guard-status" id="guardStatus"></div>
+
+        <!-- Stats animées -->
+        <div class="hero-stats-row">
+          <div class="hero-stat-item">
+            <span class="hero-stat-num" id="statTotal">55</span>
+            <span class="hero-stat-label">Pharmacies</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num" id="statRegions">6</span>
+            <span class="hero-stat-label">Régions</span>
+          </div>
+          <div class="hero-stat-item">
+            <span class="hero-stat-num" id="stat24h">7</span>
+            <span class="hero-stat-label">Ouvertes 24h</span>
+          </div>
+        </div>
+
+        <!-- SAMU urgence -->
+        <a href="tel:1515" class="samu-btn" aria-label="Appeler le SAMU, numéro 15 15">
+          <div class="samu-icon"><i class="fas fa-ambulance"></i></div>
+          <div class="samu-text">
+            <span class="samu-label">Urgence médicale ?</span>
+            <span class="samu-num">Appeler le SAMU · 1515</span>
+          </div>
+          <i class="fas fa-chevron-right samu-arrow"></i>
+        </a>
+      </div>
+
+      <!-- GÉOLOCALISATION -->
+      <div class="geo-wrap">
+        <button class="geo-btn" id="geolocateBtn" aria-label="Trouver la pharmacie la plus proche de moi">
+          <i class="fas fa-crosshairs"></i>
+          <span>Trouver la pharmacie la plus proche</span>
+        </button>
+      </div>
+
+      <!-- RECHERCHE + FILTRES (restent visibles pendant le défilement) -->
+      <div class="sidebar-sticky">
+        <div class="search-wrap">
+          <div class="search-box">
+            <i class="fas fa-search search-icon" aria-hidden="true"></i>
+            <input
+              type="search"
+              id="searchInput"
+              class="search-input"
+              placeholder="Pharmacie, ville, quartier…"
+              aria-label="Rechercher une pharmacie"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button class="search-clear" id="searchClear"
+              aria-label="Effacer la recherche" hidden>
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="filters-wrap">
+          <div class="filters-scroll" role="group" aria-label="Filtrer par région">
+            <button class="filter-chip active" data-region="all">Toutes</button>
+            <button class="filter-chip" data-region="Dakar">Dakar</button>
+            <button class="filter-chip" data-region="Thiès">Thiès</button>
+            <button class="filter-chip" data-region="Saint-Louis">Saint-Louis</button>
+            <button class="filter-chip" data-region="Ziguinchor">Ziguinchor</button>
+            <button class="filter-chip" data-region="Kaolack">Kaolack</button>
+            <button class="filter-chip" data-region="Tambacounda">Tambacounda</button>
+          </div>
+        </div>
+      </div><!-- /sidebar-sticky -->
+
+      <!-- PHARMACIES 24H/24 -->
+      <div class="urgent-wrap">
+        <div class="urgent-header">
+          <i class="fas fa-circle pulse-dot" aria-hidden="true"></i>
+          <span>Ouvertes 24h/24 — toujours disponibles</span>
+        </div>
+        <div class="urgent-chips" id="urgentChips" role="list" aria-label="Pharmacies ouvertes 24h sur 24">
+          <!-- injecté par app.js -->
+        </div>
+      </div>
+
+      <!-- COMPTEUR -->
+      <div class="result-info" aria-live="polite">
+        <span id="resultCount">55</span>
+        <span> pharmacie(s) de garde</span>
+      </div>
+
+      <!-- LISTE -->
+      <div class="pharmacy-list" id="pharmacyList"
+        role="list"
+        aria-label="Liste des pharmacies de garde">
+        <!-- injecté par app.js -->
+      </div>
+
+    </aside>
+
+    <!-- ── MAP ──────────────────────────────────────────────────── -->
+    <div class="map-wrap" id="mapWrap">
+
+      <!-- Grille régions — affichée si carte indisponible -->
+      <div class="region-fallback" id="regionFallback" hidden aria-label="Sélection par région">
+        <div class="region-fallback-body">
+          <div class="region-fallback-icon"><i class="fas fa-map-marked-alt"></i></div>
+          <h2 class="region-fallback-title">Choisissez votre région</h2>
+          <p class="region-fallback-sub">
+            Sélectionnez une région pour afficher les pharmacies de garde.
+            <br/><em>Vous pouvez aussi utiliser la recherche à gauche.</em>
+          </p>
+          <div class="region-grid" id="regionGrid">
+            <!-- injecté par app.js -->
+          </div>
+          <p class="region-fallback-hint">
+            <i class="fas fa-info-circle"></i>
+            Carte non disponible — vérifiez votre connexion internet.
+          </p>
+        </div>
+      </div>
+
+      <!-- Carte Leaflet -->
+      <div id="map" role="application" aria-label="Carte interactive des pharmacies de garde"></div>
+
+      <!-- Bouton géolocalisation sur la carte -->
+      <button class="map-geo-btn" id="mapGeoBtn" title="Me géolocaliser sur la carte">
+        <i class="fas fa-crosshairs"></i>
+        <span>Me localiser</span>
+      </button>
+
+      <!-- Bande d'info en bas de carte -->
+      <div class="map-strip" id="mapStrip">
+        <div class="map-strip-stat">
+          <span class="map-strip-num" id="mapTotalCount">55</span>
+          <span>pharmacies de garde</span>
+        </div>
+        <div class="map-strip-sep"></div>
+        <div class="map-strip-stat">
+          <i class="fas fa-circle" style="font-size:8px;color:#4CAF50;"></i>
+          <span class="map-strip-num" id="map24hCount">7</span>
+          <span>ouvertes 24h/24</span>
+        </div>
+        <div class="map-strip-grow"></div>
+        <a href="tel:1515" class="map-strip-samu" title="Appeler le SAMU">
+          <i class="fas fa-ambulance"></i> SAMU 1515
+        </a>
+      </div>
+
+      <!-- Bouton flottant mobile -->
+      <button class="fab-toggle" id="fabToggle" aria-label="Afficher la liste des pharmacies">
+        <i class="fas fa-list" id="fabIcon" aria-hidden="true"></i>
+        <span id="fabLabel">Liste</span>
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- ══ MODAL DÉTAIL ══════════════════════════════════════════════ -->
+  <div class="modal-overlay" id="modalOverlay"
+    role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+    <div class="modal-panel" id="modalPanel">
+      <button class="modal-close-btn" id="modalClose" aria-label="Fermer">
+        <i class="fas fa-times"></i>
+      </button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- ══ SCRIPTS ═══════════════════════════════════════════════════ -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPQ=" crossorigin=""></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>

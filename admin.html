@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administration — Pharmyx Sénégal</title>
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Le layout admin est scrollable, contrairement à la carte plein écran */
+    html, body { height: auto !important; overflow: auto !important; }
+  </style>
+</head>
+
+<body class="admin-body">
+
+  <!-- ══ HEADER ══════════════════════════════════════════════════ -->
+  <header class="header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="brand" aria-label="Retour à l'accueil">
+        <div class="brand-icon"><i class="fas fa-clinic-medical"></i></div>
+        <div class="brand-text">
+          <span class="brand-name">Pharmyx</span>
+          <span class="brand-country">Administration</span>
+        </div>
+      </a>
+      <div class="header-right">
+        <a href="index.html" class="admin-link">
+          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          <span>Retour au site</span>
+        </a>
+        <button class="admin-link" id="logoutBtn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);">
+          <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+          <span>Déconnexion</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══ CONTENU ════════════════════════════════════════════════ -->
+  <main class="admin-main">
+
+    <!-- LOGIN -->
+    <div id="loginSection">
+      <div class="login-card">
+        <div class="login-card-header">
+          <i class="fas fa-lock"></i>
+          <h2>Accès Administration</h2>
+          <p>Entrez le mot de passe pour continuer</p>
+        </div>
+        <div class="login-card-body">
+          <div class="form-group">
+            <label class="form-label" for="passwordInput">Mot de passe</label>
+            <input
+              type="password"
+              id="passwordInput"
+              class="form-input"
+              placeholder="••••••••••"
+              autocomplete="current-password"
+            />
+            <p class="form-error" id="loginError">Mot de passe incorrect.</p>
+          </div>
+          <button class="btn-full" id="loginBtn">
+            <i class="fas fa-sign-in-alt"></i> Se connecter
+          </button>
+          <p style="text-align:center;margin-top:16px;font-size:12px;color:#9CA3AF;">
+            Mot de passe par défaut : <strong>pharma2025</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboardSection" style="display:none;">
+
+      <!-- En-tête -->
+      <div class="admin-header-bar">
+        <div>
+          <h1 class="admin-title">Pharmacies de Garde</h1>
+          <p class="admin-subtitle">Gérez la liste des pharmacies de garde du Sénégal</p>
+        </div>
+        <div class="admin-actions">
+          <button class="btn-red" id="resetDataBtn">
+            <i class="fas fa-undo"></i> Réinitialiser
+          </button>
+          <button class="btn-green" id="addPharmacyBtn">
+            <i class="fas fa-plus"></i> Ajouter
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistiques -->
+      <div class="admin-stats" id="adminStats">
+        <!-- Injecté par JS -->
+      </div>
+
+      <!-- Tableau -->
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <input
+            type="search"
+            id="tableSearch"
+            class="table-search"
+            placeholder="Rechercher dans le tableau…"
+          />
+          <span id="tableCount" style="font-size:13px;color:#6B7280;white-space:nowrap;"></span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="admin-table" id="adminTable" aria-label="Liste des pharmacies">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nom</th>
+                <th>Ville</th>
+                <th>Commune</th>
+                <th>Région</th>
+                <th>Téléphone</th>
+                <th>Horaires</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody">
+              <!-- Injecté par JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ══ MODAL AJOUT/ÉDITION ═══════════════════════════════════ -->
+  <div class="admin-modal-overlay" id="formModalOverlay" role="dialog"
+    aria-modal="true" aria-labelledby="formModalTitle">
+    <div class="admin-modal">
+      <div class="admin-modal-header">
+        <h3 id="formModalTitle">Ajouter une pharmacie</h3>
+        <button class="admin-modal-close" id="formModalClose" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <form id="pharmacyForm" novalidate>
+          <input type="hidden" id="formId" />
+          <div class="form-grid">
+            <div class="form-group full">
+              <label class="form-label" for="formName">Nom de la pharmacie *</label>
+              <input type="text" id="formName" class="form-input" placeholder="Pharmacie du Plateau" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="formRegion">Région *</label>
+              <select id="formRegion" class="form-input" required>
+                <option value="">— Choisir —</option>
+                <option>Dakar</option>
+                <option>Thiès</option>
+                <option>Saint-Louis</option>
+                <option>Ziguinchor</option>
+                <option>Kaolack</option>
+                <option>Tambacounda</option>
+                <option>Diourbel</option>
+                <option>Fatick</option>
+                <option>Kaffrine</option>
+                <option>Kédougou</option>
+                <option>Kolda</option>
+                <option>Louga</option>
+                <option>Matam</option>
+                <option>Sédhiou</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="formCity">Ville *</label>
+              <input type="text" id="formCity" class="form-input" placeholder="Dakar" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="formCommune">Commune *</label>
+              <input type="text" id="formCommune" class="form-input" placeholder="Plateau" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="formQuartier">Quartier</label>
+              <input type="text" id="formQuartier" class="form-input" placeholder="Centre-ville" />
+            </div>
+            <div class="form-group full">
+              <label class="form-label" for="formAddress">Adresse complète *</label>
+              <input type="text" id="formAddress" class="form-input"
+                placeholder="12, Rue du Dr Thèze, Plateau, Dakar" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="formPhone">Téléphone</label>
+              <input type="tel" id="formPhone" class="form-input" placeholder="+221 33 XXX XX XX" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="formSchedule">Horaires de garde *</label>
+              <input type="text" id="formSchedule" class="form-input"
+                placeholder="24h/24 · 7j/7" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="formLat">Latitude *</label>
+              <input type="number" id="formLat" class="form-input"
+                placeholder="14.6712" step="0.0001" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="formLng">Longitude *</label>
+              <input type="number" id="formLng" class="form-input"
+                placeholder="-17.4433" step="0.0001" required />
+            </div>
+          </div>
+          <p style="font-size:12px;color:#9CA3AF;margin-top:8px;">
+            <i class="fas fa-info-circle"></i>
+            Coordonnées GPS : trouvez-les sur <a href="https://www.google.com/maps" target="_blank" rel="noopener" style="color:#2E7D32;">Google Maps</a> (clic droit → "C'est ici").
+          </p>
+        </form>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-secondary" id="formCancelBtn">Annuler</button>
+        <button class="btn-green" id="formSubmitBtn">
+          <i class="fas fa-save"></i> <span id="formSubmitLabel">Enregistrer</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL CONFIRMATION SUPPRESSION ══════════════════════════ -->
+  <div class="admin-modal-overlay" id="deleteModalOverlay" role="dialog" aria-modal="true">
+    <div class="admin-modal" style="max-width:400px;">
+      <div class="admin-modal-header">
+        <h3 style="color:#C62828;">Confirmer la suppression</h3>
+        <button class="admin-modal-close" id="deleteModalClose" aria-label="Annuler">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="admin-modal-body">
+        <p style="color:#374151;line-height:1.6;">
+          Voulez-vous vraiment supprimer <strong id="deletePharmacyName"></strong> ?
+          <br/>Cette action est irréversible.
+        </p>
+      </div>
+      <div class="admin-modal-footer">
+        <button class="btn-secondary" id="deleteCancelBtn">Annuler</button>
+        <button class="btn-red" id="deleteConfirmBtn">
+          <i class="fas fa-trash"></i> Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script>
+  /* ── Admin — Logique ──────────────────────────────────────────── */
+
+  const ADMIN_PASSWORD = 'pharma2025';
+  const STORAGE_KEY = 'pharmagarde_data';
+  let pharmacies = [];
+  let deleteTargetId = null;
+  let tableSearchQuery = '';
+
+  // ── Authentification ────────────────────────────────────────────
+  function checkAuth() {
+    const auth = sessionStorage.getItem('pharmagarde_admin');
+    if (auth === '1') showDashboard();
+    else showLogin();
+  }
+
+  function showLogin() {
+    document.getElementById('loginSection').style.display = 'block';
+    document.getElementById('dashboardSection').style.display = 'none';
+    document.getElementById('logoutBtn').style.display = 'none';
+  }
+
+  function showDashboard() {
+    document.getElementById('loginSection').style.display = 'none';
+    document.getElementById('dashboardSection').style.display = 'block';
+    document.getElementById('logoutBtn').style.display = 'flex';
+    loadPharmacies();
+    renderStats();
+    renderTable(pharmacies);
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    const pw = document.getElementById('passwordInput').value;
+    const err = document.getElementById('loginError');
+    if (pw === ADMIN_PASSWORD) {
+      sessionStorage.setItem('pharmagarde_admin', '1');
+      err.style.display = 'none';
+      showDashboard();
+    } else {
+      err.style.display = 'block';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('passwordInput').focus();
+    }
+  });
+
+  document.getElementById('passwordInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('loginBtn').click();
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    sessionStorage.removeItem('pharmagarde_admin');
+    showLogin();
+  });
+
+  // ── Données ─────────────────────────────────────────────────────
+  function loadPharmacies() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      pharmacies = stored ? JSON.parse(stored) : [...PHARMACIES_DATA];
+    } catch {
+      pharmacies = [...PHARMACIES_DATA];
+    }
+  }
+
+  function savePharmacies() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pharmacies));
+  }
+
+  function nextId() {
+    return pharmacies.length > 0 ? Math.max(...pharmacies.map(p => p.id)) + 1 : 1;
+  }
+
+  // ── Statistiques ────────────────────────────────────────────────
+  function renderStats() {
+    const regions = [...new Set(pharmacies.map(p => p.region))].length;
+    const cities = [...new Set(pharmacies.map(p => p.city))].length;
+
+    document.getElementById('adminStats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-clinic-medical"></i></div>
+        <div>
+          <div class="stat-number">${pharmacies.length}</div>
+          <div class="stat-label">Pharmacies</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-map"></i></div>
+        <div>
+          <div class="stat-number">${regions}</div>
+          <div class="stat-label">Régions</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><i class="fas fa-city"></i></div>
+        <div>
+          <div class="stat-number">${cities}</div>
+          <div class="stat-label">Villes</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Tableau ─────────────────────────────────────────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('adminTableBody');
+    document.getElementById('tableCount').textContent =
+      `${data.length} / ${pharmacies.length} entrée(s)`;
+
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#9CA3AF;">
+        Aucune pharmacie correspondante.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(p => `
+      <tr>
+        <td style="color:#9CA3AF;font-size:12px;">${p.id}</td>
+        <td class="td-name">${p.name}</td>
+        <td>${p.city}</td>
+        <td>${p.commune}</td>
+        <td><span class="td-badge">${p.region}</span></td>
+        <td>${p.phone || '—'}</td>
+        <td style="font-size:12px;color:#6B7280;">${p.schedule}</td>
+        <td>
+          <div class="td-actions">
+            <button class="btn-green btn-sm" onclick="editPharmacy(${p.id})">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-red btn-sm" onclick="confirmDelete(${p.id}, '${escapeHtml(p.name)}')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  document.getElementById('tableSearch').addEventListener('input', e => {
+    tableSearchQuery = e.target.value.toLowerCase();
+    const filtered = pharmacies.filter(p =>
+      [p.name, p.city, p.commune, p.region, p.address].join(' ').toLowerCase().includes(tableSearchQuery)
+    );
+    renderTable(filtered);
+  });
+
+  // ── Formulaire Ajout / Édition ───────────────────────────────────
+  function openForm(title, submitLabel) {
+    document.getElementById('formModalTitle').textContent = title;
+    document.getElementById('formSubmitLabel').textContent = submitLabel;
+    const overlay = document.getElementById('formModalOverlay');
+    overlay.classList.add('active');
+  }
+
+  function closeForm() {
+    document.getElementById('formModalOverlay').classList.remove('active');
+    document.getElementById('pharmacyForm').reset();
+    document.getElementById('formId').value = '';
+  }
+
+  document.getElementById('addPharmacyBtn').addEventListener('click', () => {
+    openForm('Ajouter une pharmacie', 'Enregistrer');
+  });
+
+  document.getElementById('formModalClose').addEventListener('click', closeForm);
+  document.getElementById('formCancelBtn').addEventListener('click', closeForm);
+
+  document.getElementById('formModalOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeForm();
+  });
+
+  function editPharmacy(id) {
+    const p = pharmacies.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('formId').value = p.id;
+    document.getElementById('formName').value = p.name;
+    document.getElementById('formRegion').value = p.region;
+    document.getElementById('formCity').value = p.city;
+    document.getElementById('formCommune').value = p.commune;
+    document.getElementById('formQuartier').value = p.quartier || '';
+    document.getElementById('formAddress').value = p.address;
+    document.getElementById('formPhone').value = p.phone || '';
+    document.getElementById('formSchedule').value = p.schedule;
+    document.getElementById('formLat').value = p.lat;
+    document.getElementById('formLng').value = p.lng;
+    openForm('Modifier la pharmacie', 'Sauvegarder');
+  }
+
+  document.getElementById('formSubmitBtn').addEventListener('click', () => {
+    const name = document.getElementById('formName').value.trim();
+    const region = document.getElementById('formRegion').value;
+    const city = document.getElementById('formCity').value.trim();
+    const commune = document.getElementById('formCommune').value.trim();
+    const address = document.getElementById('formAddress').value.trim();
+    const schedule = document.getElementById('formSchedule').value.trim();
+    const lat = parseFloat(document.getElementById('formLat').value);
+    const lng = parseFloat(document.getElementById('formLng').value);
+
+    if (!name || !region || !city || !commune || !address || !schedule || isNaN(lat) || isNaN(lng)) {
+      alert('Veuillez remplir tous les champs obligatoires (*).');
+      return;
+    }
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      alert('Les coordonnées GPS sont invalides.');
+      return;
+    }
+
+    const entry = {
+      id: parseInt(document.getElementById('formId').value) || nextId(),
+      name,
+      region,
+      city,
+      commune,
+      quartier: document.getElementById('formQuartier').value.trim() || commune,
+      address,
+      phone: document.getElementById('formPhone').value.trim() || null,
+      schedule,
+      lat,
+      lng,
+    };
+
+    const existingIdx = pharmacies.findIndex(p => p.id === entry.id);
+    if (existingIdx >= 0) {
+      pharmacies[existingIdx] = entry;
+      showToast('Pharmacie modifiée avec succès.');
+    } else {
+      pharmacies.push(entry);
+      showToast('Pharmacie ajoutée avec succès.');
+    }
+
+    savePharmacies();
+    renderStats();
+    renderTable(pharmacies);
+    closeForm();
+  });
+
+  // ── Suppression ──────────────────────────────────────────────────
+  function confirmDelete(id, name) {
+    deleteTargetId = id;
+    document.getElementById('deletePharmacyName').textContent = name;
+    document.getElementById('deleteModalOverlay').classList.add('active');
+  }
+
+  document.getElementById('deleteModalClose').addEventListener('click', () => {
+    document.getElementById('deleteModalOverlay').classList.remove('active');
+  });
+  document.getElementById('deleteCancelBtn').addEventListener('click', () => {
+    document.getElementById('deleteModalOverlay').classList.remove('active');
+  });
+  document.getElementById('deleteConfirmBtn').addEventListener('click', () => {
+    pharmacies = pharmacies.filter(p => p.id !== deleteTargetId);
+    savePharmacies();
+    renderStats();
+    renderTable(pharmacies);
+    document.getElementById('deleteModalOverlay').classList.remove('active');
+    showToast('Pharmacie supprimée.');
+    deleteTargetId = null;
+  });
+
+  // ── Réinitialisation ─────────────────────────────────────────────
+  document.getElementById('resetDataBtn').addEventListener('click', () => {
+    if (!confirm('Réinitialiser toutes les données ? Les modifications seront perdues.')) return;
+    pharmacies = [...PHARMACIES_DATA];
+    savePharmacies();
+    renderStats();
+    renderTable(pharmacies);
+    showToast('Données réinitialisées.');
+  });
+
+  // ── Toast ────────────────────────────────────────────────────────
+  function showToast(msg) {
+    let t = document.getElementById('adminToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'adminToast';
+      t.className = 'toast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────
+  checkAuth();
+  </script>
+
+</body>
+</html>
